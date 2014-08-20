@@ -48,3 +48,94 @@ var app = {
         console.log('Received Event: ' + id);
     }
 };
+
+var geoData = new Array;
+
+function getInfo_Click() {
+    // Wait for Cordova to load
+    //
+    document.addEventListener("deviceready", onDeviceReady, false);
+
+    var latitude, longitude, accuracy;
+            
+    // Cordova is ready
+    //
+    function onDeviceReady() {
+    }
+    
+    setGeolocation();
+    
+    function setGeolocation() {
+        sendGeoData();
+        geoData = [];
+        var geolocation = window.navigator.geolocation.watchPosition(
+            function (position) {
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+                accuracy = position.coords.accuracy;
+                var element = document.getElementById('geolocation');
+                if (accuracy < 200)//Measured in meteres
+                {
+                    element.innerHTML += 'lat: ' + latitude + ', '
+                                         + 'lng: ' + longitude + ', '
+                                         + 'accuracy: ' + accuracy + '<br />';
+            
+                    geoData.push({ lat: latitude, longitude: longitude, acc: accuracy});
+                    //geoData.push("testLat");
+                }
+            },
+            function () {
+            /*error*/ }, {
+                maximumAge: 250, 
+                enableHighAccuracy: true
+            } 
+            );
+            
+        window.setTimeout(function () {
+            window.navigator.geolocation.clearWatch(geolocation) 
+        }, 
+                          10000 //stop checking after 10 seconds
+            //120000
+            );
+        
+    };
+            
+    
+            
+    window.setInterval(function () {
+        setGeolocation();
+    }, 
+                       60000
+    					
+        //120000//10000 //check every 10 seconds -> would really be around 15-30 minutes
+        //120000// - >  2 minutes
+        );
+    
+}
+function sendInfo_Click() {
+    $.ajax({
+               type: "GET",
+               url: "http://monoservicetest.trihydro.com/MobilePhoto/PhotoService.svc/getGeoData",//"http://localhost/JsonMobilePhoto/PhotoService.svc/getGeoData",
+               headers: {'Authentication':token},
+               data: {data: JSON.stringify(geoData)},
+               contentType: "application/json; charset=utf-8",
+               dataType: "json",
+               success: function (data) {
+                   //alert(data);
+               },
+           });   
+}
+
+function sendGeoData() {
+    $.ajax({
+               type: "GET",
+               url: "http://monoservicetest.trihydro.com/MobilePhoto/PhotoService.svc/getGeoData",//"http://localhost/JsonMobilePhoto/PhotoService.svc/getGeoData","http://monoservicetest.trihydro.com/MobilePhoto/PhotoService.svc/getGeoData",
+               headers: {'Authentication':token},
+               data: {data: JSON.stringify(geoData)},
+               contentType: "application/json; charset=utf-8",
+               dataType: "json",
+               success: function (data) {
+                   //alert(data);
+               },
+           }); 
+}
